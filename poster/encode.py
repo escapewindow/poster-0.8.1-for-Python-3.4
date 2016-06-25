@@ -8,6 +8,7 @@ multipart/form-data is the standard way to upload files over HTTP"""
 __all__ = ['gen_boundary', 'encode_and_quote', 'MultipartParam',
         'encode_string', 'encode_file_header', 'get_body_size', 'get_headers',
         'multipart_encode']
+import six
 
 try:
     import uuid
@@ -86,13 +87,15 @@ class MultipartParam(object):
         if filename is None:
             self.filename = None
         else:
-            if isinstance(filename, str):
+            if isinstance(filename, six.text_type):
                 # Encode with XML entities
                 self.filename = filename.encode("ascii", "xmlcharrefreplace")
+                if six.PY3:
+                    self.filename = self.filename.decode('utf-8')
             else:
                 self.filename = str(filename)
-            self.filename = self.filename.encode("string_escape").\
-                    replace('"', '\\"')
+            self.filename = self.filename.encode("unicode_escape").\
+                    replace('"', '\\"').replace("'", "\\'")
         self.filetype = _strify(filetype)
 
         self.filesize = filesize
