@@ -375,6 +375,10 @@ class multipart_yielder:
     def __len__(self):
         return self.total
 
+    def __getitem__(self, *args, **kwargs):
+        # http://stackoverflow.com/questions/216972/in-python-what-does-it-mean-if-an-object-is-subscriptable-or-not
+        # this is what needs writing next to get past the current py3 error
+
 def multipart_encode(params, boundary=None, cb=None):
     """Encode ``params`` as multipart/form-data.
 
