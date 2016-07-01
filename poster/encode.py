@@ -44,9 +44,15 @@ def _strify(s):
     otherwise return str(s), or None if s is None"""
     if s is None:
         return None
-    if isinstance(s, str):
-        return s.encode("utf-8")
-    return str(s)
+    if six.PY2:
+        if isinstance(s, str):
+            return s.encode("utf-8")
+        return str(s)
+    try:
+        s = s.decode("utf-8")
+    except (AttributeError, UnicodeDecodeError):
+        pass
+    return s
 
 class MultipartParam(object):
     """Represents a single parameter in a multipart/form-data request
@@ -95,7 +101,7 @@ class MultipartParam(object):
             else:
                 self.filename = str(filename)
             self.filename = self.filename.encode("unicode_escape").\
-                    replace('"', '\\"').replace("'", "\\'")
+                    replace(b'"', b'\\"').replace(b"'", b"\\'")
         self.filetype = _strify(filetype)
 
         self.filesize = filesize
@@ -215,7 +221,7 @@ class MultipartParam(object):
         else:
             value = self.value
 
-        if re.search("^--%s$" % re.escape(boundary), value, re.M):
+        if re.search("^--%s$" % re.escape(boundary), _strify(value), re.M):
             raise ValueError("boundary found in encoded string")
 
         return "%s%s\r\n" % (self.encode_hdr(boundary), value)
@@ -365,6 +371,9 @@ class multipart_yielder:
         self.current = 0
         for param in self.params:
             param.reset()
+
+    def __len__(self):
+        return self.total
 
 def multipart_encode(params, boundary=None, cb=None):
     """Encode ``params`` as multipart/form-data.
